@@ -22,7 +22,7 @@ db.transaction(
       audioUrl TEXT NOT NULL
     )`);
   }, 
-  (err : SQLite.SQLError) => console.log(err) 
+  (err : SQLite.SQLError) => console.error(err) 
 );
 
 const App : React.FC = () : React.ReactElement => {
@@ -40,26 +40,24 @@ const App : React.FC = () : React.ReactElement => {
           }
         );
       },
-      (err : SQLite.SQLError) => console.log(err)
+      (err : SQLite.SQLError) => console.error(err)
     );
   }
 
   const startRecoding = async () => {
 
     try {
-      console.log('Requesting permissions..');
+
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
-      console.log('Starting recording..');
       const { recording } = await Audio.Recording.createAsync( 
         Audio.RecordingOptionsPresets.HIGH_QUALITY 
       );
       setRecording(recording);
-      console.log('Recording started');
     } 
     catch (err : any) {
       console.error('Failed to start recording', err);
@@ -68,7 +66,6 @@ const App : React.FC = () : React.ReactElement => {
 
   const stopRecording = async () => {
 
-    console.log('Stopping recording..');
     setRecording(undefined);
     await recording?.stopAndUnloadAsync();
     await Audio.setAudioModeAsync({
@@ -105,13 +102,12 @@ const App : React.FC = () : React.ReactElement => {
   const playSound = async (uri : string) => {
 
     if (uri) {
-      console.log('Loading Sound');
+
       const { sound } = await Audio.Sound.createAsync( 
         { uri: uri }
       )
       setSound(sound);
 
-      console.log('Playing Sound');
       await sound.playAsync();
     }
   }
@@ -120,7 +116,6 @@ const App : React.FC = () : React.ReactElement => {
 
     return sound
       ? () => {
-          console.log('Unloading Sound');
           sound.unloadAsync(); 
         }
       : undefined;
