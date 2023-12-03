@@ -2,10 +2,11 @@ import { StatusBar } from 'expo-status-bar';
 import { Button, StyleSheet, Text, View } from 'react-native';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const App : React.FC = () : React.ReactElement => {
   const [recording, setRecording] = useState<Audio.Recording>();
+  const [sound, setSound] = useState<Audio.Sound>();
 
   const startRecoding = async () => {
 
@@ -54,11 +55,36 @@ const App : React.FC = () : React.ReactElement => {
     }
   }
 
+  const playSound = async () => {
+
+    console.log('Loading Sound');
+    const { sound } = await Audio.Sound.createAsync( 
+      { uri: 'file:///data/user/0/host.exp.exponent/files/1701620214048.m4a' }
+    )
+    setSound(sound);
+
+    console.log('Playing Sound');
+    await sound.playAsync();
+  }
+
+  useEffect(() => {
+    return sound
+      ? () => {
+          console.log('Unloading Sound');
+          sound.unloadAsync(); 
+        }
+      : undefined;
+  }, [sound]);
+
   return (
     <View style={styles.container}>
       <Button 
         title={recording ? 'Stop Recording' : 'Start Recording'}
         onPress={recording ? stopRecording : startRecoding}
+      />
+      <Button 
+        title="Play Sound"
+        onPress={playSound}
       />
       <StatusBar style="auto" />
     </View>
