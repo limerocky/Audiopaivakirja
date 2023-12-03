@@ -1,9 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
-import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 import { useEffect, useState } from 'react';
+import { Button } from 'react-native-paper';
 
 interface Merkinta {
   id: number;
@@ -33,7 +34,7 @@ const App : React.FC = () : React.ReactElement => {
 
     db.transaction(
       (tx : SQLite.SQLTransaction) => {
-        tx.executeSql(`SELECT * FROM paivakirja`, [],
+        tx.executeSql(`SELECT * FROM paivakirja ORDER BY timestamp DESC`, [],
           (_tx : SQLite.SQLTransaction, rs : SQLite.SQLResultSet) => {
             setPaivakirja(rs.rows._array);
           }
@@ -86,7 +87,8 @@ const App : React.FC = () : React.ReactElement => {
         console.log('Recording moved to', destinationUri);
         db.transaction(
           (tx : SQLite.SQLTransaction) => {
-            tx.executeSql(`INSERT INTO paivakirja (audioUrl) VALUES (?)`, [destinationUri],
+            tx.executeSql(`INSERT INTO paivakirja (audioUrl, timestamp) 
+                           VALUES (?, datetime('now', 'localtime'))`, [destinationUri],
               (_tx : SQLite.SQLTransaction, rs : SQLite.SQLResultSet) => {
                 haePaivakirja();
               }
@@ -133,23 +135,35 @@ const App : React.FC = () : React.ReactElement => {
 
   return (
     <View style={styles.container}>
-      <View>
+
+      <ScrollView
+        style={{ width: '100%', marginTop: 50 }}
+        contentContainerStyle={{ alignItems: 'center' }}
+      >
         {paivakirja.map((merkinta : Merkinta) => {
           return (
-            <View key={merkinta.id}>
+            <View 
+              style={{ marginTop: 20 }}
+              key={merkinta.id}
+            >
               <Text>{merkinta.timestamp}</Text>
+
               <Button 
-                title="Play Sound"
+                mode="outlined"
                 onPress={() => playSound(merkinta.audioUrl)}
-              />
+              >Toista ääntä</Button>
+
             </View>
           );
         })}
-      </View>
+      </ScrollView>
+
       <Button 
-        title={recording ? 'Stop Recording' : 'Start Recording'}
+        style={{ margin: 10 }}
+        mode="contained"
         onPress={recording ? stopRecording : startRecoding}
-      />
+      >{recording ? 'Lopeta äänitys' : 'Aloita äänitys'}</Button>
+
       <StatusBar style="auto" />
     </View>
   );
