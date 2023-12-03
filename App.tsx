@@ -1,11 +1,52 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Button, StyleSheet, Text, View } from 'react-native';
+import { Audio } from 'expo-av';
+import { useState } from 'react';
 
 const App : React.FC = () : React.ReactElement => {
+  const [recording, setRecording] = useState<Audio.Recording>();
+  const [sound, setSound] = useState<Audio.Sound>();
+
+  const startRecoding = async () => {
+
+    try {
+      console.log('Requesting permissions..');
+      await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      console.log('Starting recording..');
+      const { recording } = await Audio.Recording.createAsync( Audio.RecordingOptionsPresets.HIGH_QUALITY );
+      setRecording(recording);
+      console.log('Recording started');
+    } 
+    catch (err : any) {
+      console.error('Failed to start recording', err);
+    }
+  }
+
+  const stopRecording = async () => {
+
+    console.log('Stopping recording..');
+    setRecording(undefined);
+    await recording?.stopAndUnloadAsync();
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+    });
+    const uri = recording?.getURI();
+    console.log('Recording stopped and stored at', uri);
+  }
+
+  
 
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+      <Button 
+        title={recording ? 'Stop Recording' : 'Start Recording'}
+        onPress={recording ? stopRecording : startRecoding}
+      />
       <StatusBar style="auto" />
     </View>
   );
