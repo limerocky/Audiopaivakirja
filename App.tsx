@@ -1,11 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
 import { Button, StyleSheet, Text, View } from 'react-native';
 import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
 import { useState } from 'react';
 
 const App : React.FC = () : React.ReactElement => {
   const [recording, setRecording] = useState<Audio.Recording>();
-  const [sound, setSound] = useState<Audio.Sound>();
 
   const startRecoding = async () => {
 
@@ -18,7 +18,9 @@ const App : React.FC = () : React.ReactElement => {
       });
 
       console.log('Starting recording..');
-      const { recording } = await Audio.Recording.createAsync( Audio.RecordingOptionsPresets.HIGH_QUALITY );
+      const { recording } = await Audio.Recording.createAsync( 
+        Audio.RecordingOptionsPresets.HIGH_QUALITY 
+      );
       setRecording(recording);
       console.log('Recording started');
     } 
@@ -37,9 +39,20 @@ const App : React.FC = () : React.ReactElement => {
     });
     const uri = recording?.getURI();
     console.log('Recording stopped and stored at', uri);
-  }
 
-  
+    if (uri) {
+      const destinationUri : string = `${FileSystem.documentDirectory}${Date.now()}.m4a`;
+      try {
+        await FileSystem.moveAsync({
+          from: uri,
+          to: destinationUri,
+        });
+        console.log('Recording moved to', destinationUri);
+      } catch (error) {
+        console.error('Error moving recording:', error);
+      }
+    }
+  }
 
   return (
     <View style={styles.container}>
